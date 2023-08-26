@@ -10,30 +10,34 @@ app = FastAPI(title="Tortoise ORM FastAPI example")
 
 @app.get("/upload-db")
 async def update_users():
-    response_users = httpx.get(f"https://gorest.co.in/public/v2/users?page=1&per_page=100").json()
-    for user in response_users:
-        new_user = Users(user_id=user["id"],
-                         name=user["name"],
-                         email=user["email"],
-                         gender=user["gender"],
-                         status=user["status"],
-                         )
-        try:
-            await new_user.save()
-        except tortoise.exceptions.IntegrityError:
-            continue
+    async with httpx.AsyncClient() as client:
+        response_users = await client.get(f"https://gorest.co.in/public/v2/users?page=1&per_page=100")
+        response_users = response_users.json()
+        for user in response_users:
+            new_user = Users(user_id=user["id"],
+                             name=user["name"],
+                             email=user["email"],
+                             gender=user["gender"],
+                             status=user["status"],
+                             )
+            try:
+                await new_user.save()
+            except tortoise.exceptions.IntegrityError:
+                continue
 
-    response_posts = httpx.get("https://gorest.co.in/public/v2/posts?page=1&per_page=100").json()
-    for post in response_posts:
-        new_post = Posts(post_id=post["id"],
-                         title=post["title"],
-                         body=post["body"],
-                         user_id=post["user_id"],
-                         )
-        try:
-            await new_post.save()
-        except tortoise.exceptions.IntegrityError:
-            continue
+    async with httpx.AsyncClient() as client:
+        response_posts = await client.get("https://gorest.co.in/public/v2/posts?page=1&per_page=100")
+        response_posts = response_posts.json()
+        for post in response_posts:
+            new_post = Posts(post_id=post["id"],
+                             title=post["title"],
+                             body=post["body"],
+                             user_id=post["user_id"],
+                             )
+            try:
+                await new_post.save()
+            except tortoise.exceptions.IntegrityError:
+                continue
 
     return {"message": "successfully updated"}
 
