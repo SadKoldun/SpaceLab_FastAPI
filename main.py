@@ -8,6 +8,9 @@ from tortoise.contrib.fastapi import register_tortoise
 app = FastAPI(title="DataBase users and posts")
 
 
+# Запрос на добавление данных в БД, используется при отсутствии БД или для проверки наличия новых данных на gorest.co.in
+# Считываются 5 страниц с пользователями по 100 пользователей на каждой
+# Также считываются 10 страниц с постами по 100 постов на каждой
 @app.get("/upload-db")
 async def update_users():
     async with httpx.AsyncClient() as client:
@@ -43,6 +46,7 @@ async def update_users():
     return {"message": "successfully updated"}
 
 
+# Вывод всех пользователей из БД
 @app.get("/users")
 async def get_users():
     users_list = await User_Pydantic.from_queryset(Users.all())
@@ -52,11 +56,13 @@ async def get_users():
         return {"message": "DataBase is empty, please, update it with http://127.0.0.1:8000/upload-db"}
 
 
+# Вывод конкретного пользователя по его ID
 @app.get("/user/{user_id}", response_model=User_Pydantic)
 async def get_user(user_id: int):
     return await User_Pydantic.from_queryset_single(Users.get(user_id=user_id))
 
 
+# Вывод всех постов конкретного пользователя
 @app.get("/user/{user_id}/posts")
 async def get_posts(user_id: int):
     posts = await Posts_Pydantic.from_queryset(Posts.filter(user_id=user_id))
